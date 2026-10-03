@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c23 -Wall -Wextra -O2 -D_POSIC_C_SOURCE=200809L
+CFLAGS = -std=c23 -Wall -Wextra -O2 -D_POSIC_C_SOURCE=200809L -D_GNU_SOURCE
 
 TARGETS = tcp_echo_server tcp_echo_client udp_echo_server udp_echo_client
 COMMON = net.o

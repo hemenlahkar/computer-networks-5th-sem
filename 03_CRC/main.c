@@ -20,8 +20,8 @@ static void usage(const char *prog)
             "\n"
             "Optional:\n"
             "\t-p <pos>\tFlip the bit at position pos (0 = leftmost of frame)\n"
-            "\t-r <n>\tInject n random bit errors\n"
-            "\t-s <seed> Random seed (default: time-based)\n"
+            "\t-r <n>\t\tInject n random bit errors\n"
+            "\t-s <seed>\tRandom seed (default: time-based)\n"
             "\t-v\t\tVerbose: print modulo-2 divison steps\n"
             "\t-h\t\tShow this help\n"
             "\n"
@@ -102,17 +102,17 @@ int main(int argc, char **argv)
     FILE *trace = verbose ? stdout : NULL;
 
     printf("======== SENDER ========\n");
-    printf("Data    : %s\n", data);
-    printf("Generator    : %s\n", gen);
+    printf("Data              : %s\n", data);
+    printf("Generator         : %s\n", gen);
 
     if (crc_generate(data, gen, crc, sizeof(crc), trace) != CRC_OK) {
         fprintf(stderr, "Error: CRC generation failed.\n");
         return 1;
     }
-    printf("CRC remainder    : %s\n", crc);
+    printf("CRC remainder     : %s\n", crc);
 
     snprintf(frame, sizeof(frame), "%s%s", data, crc);
-    printf("Transmitte frame   : %s\n", frame);
+    printf("Transmitted frame : %s\n", frame);
 
     snprintf(received, sizeof(received), "%s", frame);
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     }
 
     if (injected == 0) {
-        printf("Noiseless channel: frame passed through unchanged.\n");
+        printf("Noiseless channel : frame passed through unchanged.\n");
     }
     printf("Received frame    : %s\n", received);
 

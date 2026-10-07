@@ -4,7 +4,7 @@
 
 int crc_is_binary(const char *s)
 {
-    if (!s || *s)
+    if (!s || !(*s))
         return 0;
     for (const char *p = s; *p; ++p)
         if (*p != '0' && *p != '1')

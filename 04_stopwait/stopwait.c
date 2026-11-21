@@ -19,7 +19,7 @@ static uint16_t compute_frame_csum(const Frame* f) {
 	buf[n++] = (uint8_t)f->kind;
 	buf[n++] = f->seq;
 	buf[n++] = (uint8_t)(f->len >> 8);
-	buf[n++] = (uint8_t)(f - len & 0xFF);
+	buf[n++] = (uint8_t)(f->len & 0xFF);
 	if (f->len) {
 		memcpy(buf + n, f->data, f->len);
 		n += f->len;

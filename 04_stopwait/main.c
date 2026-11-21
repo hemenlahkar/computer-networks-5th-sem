@@ -49,6 +49,11 @@ static int sw_cycle(Sender *s, Receiver *r, const char *msg, const ChannelParams
 				reply = FRAME_NAK;
 			}
 		}
+		else {
+			if (!s->quiet)
+				printf("  [receiver] checksum FAILED -> NAK\n");
+			reply = FRAME_NAK;
+		}
 
 		sw_frame_init_ctrl(&ack, reply, (uint8_t)seq);
 		if (!channel_transmit(cp, &ack, (reply == FRAME_ACK) ? "ACK" : "NAK")) {
@@ -62,7 +67,7 @@ static int sw_cycle(Sender *s, Receiver *r, const char *msg, const ChannelParams
 		}
 		if (ack.kind == FRAME_NAK) {
 			if (!s->quiet)
-				pritnf("  [sender] NAK received -> fast retransmit\n");
+				printf("  [sender] NAK received -> fast retransmit\n");
 			continue;
 		}
 		if (!s->quiet) printf("  [sender] ACK seq=%d received\n", ack.seq);
@@ -93,3 +98,96 @@ static void usage(const char *prog) {
 			prog);
 }
 
+int main(int argc, char **argv) {
+	int	n_msgs	 = 5;
+	int 	timeout  = 3;
+	int	max_retx = 8;
+	double	drop	 = 0.20;
+	double	corrupt	 = 0.20;
+	int 	seed 	 = 1;
+	int	quiet	 = 0;
+
+	int opt;
+	while ((opt = getopt(argc, argv, "n:t:r:p:c:s:qh")) != -1) {
+		switch (opt) {
+			case 'n':
+				n_msgs = atoi(optarg);
+				break;
+			case 't':
+				timeout = atoi(optarg);
+				break;
+			case 'r':
+				max_retx = atoi(optarg);
+				break;
+			case 'p':
+				drop = atof(optarg);
+				break;
+			case 'c':
+				corrupt = atof(optarg);
+				break;
+			case 's':
+				seed = atoi(optarg);
+				break;
+			case 'q':
+				quiet = 1;
+				break;
+			case 'h':
+				usage(argv[0]);
+				return 0;
+			default:
+				usage(argv[0]);
+				return 1;
+		}
+	}
+
+	if (n_msgs <= 0 || max_retx <= 0 || timeout <= 0 ||
+	    drop < 0 || drop > 1 || corrupt < 0 ||
+	    corrupt > 1) {
+		fprintf(stderr, "Invalid parameters.\n");
+		return 1;
+	}
+
+	srand((unsigned)seed);
+
+	ChannelParams cp = {drop, corrupt};
+	Sender s = {0, max_retx, quiet};
+	Receiver r = {0, 0, 0};
+
+	printf("===========================================\n");
+	printf("   STOP-AND-WAIT ARQ over a noisy channel\n");
+	printf("===========================================\n");
+	printf("  Messages         : %d\n", n_msgs);
+	printf("  Timeout (ticks)  : %d  (conceptual)\n", timeout);
+	printf("  Max retx         : %d\n", max_retx);
+	printf("  P(drop)          : %.2f\n", drop);
+	printf("  P(corrupt)       : %.2f\n", corrupt);
+	printf("  Seed             : %d\n", seed);
+
+	int total_tx  = 0;
+	int delivered = 0;
+	int gave_up   = 0;
+
+	for (int i = 0; i < n_msgs; ++i) {
+		char msg[MAX_DATA];
+		snprintf(msg, sizeof msg, "packet-%d", i);
+		int attempts = sw_cycle(&s, &r, msg, &cp, &total_tx);
+		if (attempts < 0) {
+			printf("\n[RESULT] GAVE UP on \"%s\" after %d attempts\n", msg, max_retx);
+			gave_up++;
+		}
+		else {
+			printf("\n[RESULT] \"%s\" delivered in %d transmission(s)\n", msg, attempts);
+			delivered++;
+		}
+	}
+
+	printf("\n============ SUMMARY ============\n");
+	printf("  Messages delivered  : %d / %d\n", delivered, n_msgs);
+	printf("  Gave up             : %d\n", gave_up);
+	printf("  Duplicates seen     : %d\n", r.duplicates);
+	printf("  Total transmissions : %d\n", total_tx);
+	printf("  Efficiency          : %.2f\n (delivered / total TX)", total_tx ? (double)delivered / (double) total_tx : 0.0);
+	
+	return gave_up ? 2 : 0;
+}
+			

@@ -1,0 +1,10 @@
+# 5-node weighted network
+nodes 5
+names A B C D E
+edge A B 4
+edge A C 2
+edge B C 1
+edge B D 5
+edge C D 8
+edge C E 10
+edge D E 2

@@ -1,0 +1,5 @@
+# Classic 3-node line: A --- B --- C, both links cost 1
+nodes 3
+names A B C
+edge A B 1
+edge B C 1
